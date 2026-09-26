@@ -58,20 +58,5 @@
     "title": "一条龙生产验收",
     "buttons": [],
     "notice": []
-  },
-  "fa3e84f2841d037b03e2695e039674a11ab8a8a83f4a6132f8e5d26e116d6990": {
-    "url": "https://example.com/uitest-demo.mp4",
-    "title": "UI 测试（已改名）",
-    "buttons": [
-      {
-        "title": "加群",
-        "url": "https://example.com/group",
-        "pos": "player"
-      }
-    ],
-    "notice": [
-      "第一行文案",
-      "第二行文案"
-    ]
   }
 }
