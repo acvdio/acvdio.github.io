@@ -98,7 +98,13 @@
   "5efa62c9ae57a8ab2a3e17d384d91dae0f9f2224cf09d4887f5168047878570b": {
     "url": "https://liblibai-online.liblib.cloud/img/2f5ea8fdf1dc4645aa2014500d2a96e4/5efa62c9ae57a8ab2a3e17d384d91dae0f9f2224cf09d4887f5168047878570b.mp4",
     "title": "dy刘大炮，奶露拖",
-    "buttons": [],
+    "buttons": [
+      {
+        "title": "加入新闻群",
+        "url": "https://liblibai-online.liblib.cloud/img/2f5ea8fdf1dc4645aa2014500d2a96e4/70a9b94bb0b58bc411dd1e04ed39489fc4b30bbdef7eb1bfaa35a8981748e6af.jpg",
+        "pos": "bar"
+      }
+    ],
     "notice": []
   }
 }
