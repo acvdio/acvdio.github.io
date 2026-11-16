@@ -37,23 +37,32 @@
     }
     /* ===== 卡密 / 访问密码门 ===== */
     #gate {
-      position: fixed; inset: 0; z-index: 10002; display: none;
-      flex-direction: column; align-items: center; justify-content: center;
-      padding: 26px; text-align: center; box-sizing: border-box;
+      position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 10002; display: none;
+      flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: calc(18px + env(safe-area-inset-top)) 20px calc(18px + env(safe-area-inset-bottom));
+      text-align: center; box-sizing: border-box;
       background: radial-gradient(circle at 50% 0%, #14263f 0%, #070b12 68%);
       -webkit-tap-highlight-color: transparent;
     }
+    /* 内容用 margin:auto 居中：空间够时居中，键盘弹出/内容超高时可滚动，不会被裁掉 */
+    #gate .g-inner {
+      width: 100%; max-width: 330px; margin: auto;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    #gate .g-inner > * { flex: 0 0 auto; }
     #gate .g-lock { line-height: 0; margin-bottom: 10px; }
-    #gate .g-title { font-size: 17px; font-weight: 600; letter-spacing: .5px; color: #eaf1ff; }
+    #gate .g-title { font-size: 17px; font-weight: 600; letter-spacing: .5px; color: #eaf1ff; word-break: break-word; }
     #gate .g-hint {
       color: #9fb0d0; font-size: 12.5px; margin: 8px 0 16px;
       max-width: 330px; line-height: 1.6;
     }
+    /* 16px 是 iOS 的及格线：小于 16px 聚焦时 Safari/微信会自动放大整页 */
     #gate input {
-      width: 100%; max-width: 300px; height: 44px; box-sizing: border-box;
+      width: 100%; max-width: 300px; height: 46px; box-sizing: border-box;
       border-radius: 10px; border: 1px solid rgba(255,255,255,.16);
       background: rgba(255,255,255,.06); color: #fff; outline: none;
-      font-size: 15px; padding: 0 14px; text-align: center; letter-spacing: 1px;
+      font-size: 16px; padding: 0 14px; text-align: center; letter-spacing: 1px;
+      -webkit-appearance: none; appearance: none;
     }
     #gate input:focus { border-color: #2f7bff; background: rgba(47,123,255,.12); }
     #gate .g-btn {
@@ -193,24 +202,26 @@
 
 <!-- 卡密 / 访问密码门：在 GitHub 页面上直接验证，跨域调本站 /api/video/:id/unlock -->
 <div id="gate">
-  <div class="g-lock" aria-hidden="true">
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#79b4ff" stroke-width="2"
-         stroke-linecap="round" stroke-linejoin="round">
-      <rect x="4" y="10.5" width="16" height="10" rx="2.5"></rect>
-      <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path>
-      <circle cx="12" cy="15.5" r="1.3" fill="#79b4ff" stroke="none"></circle>
-    </svg>
-  </div>
-  <div class="g-title" id="gTitle">受保护的视频</div>
-  <div class="g-hint" id="gHint"></div>
-  <input id="gPass" type="text" autocomplete="off" autocapitalize="off" autocorrect="off"
-         spellcheck="false" placeholder="请输入卡密">
-  <button class="g-btn" id="gBtn" type="button">进入播放</button>
-  <div class="g-err" id="gErr"></div>
-  <div class="g-get" id="gGet" style="display:none">
-    <button class="g-getbtn" id="gGetBtn" type="button">获取卡密</button>
-    <img class="g-qr" id="gQr" alt="扫码获取">
-    <div class="g-tip" id="gTip"></div>
+  <div class="g-inner">
+    <div class="g-lock" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#79b4ff" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="10.5" width="16" height="10" rx="2.5"></rect>
+        <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path>
+        <circle cx="12" cy="15.5" r="1.3" fill="#79b4ff" stroke="none"></circle>
+      </svg>
+    </div>
+    <div class="g-title" id="gTitle">受保护的视频</div>
+    <div class="g-hint" id="gHint"></div>
+    <input id="gPass" type="text" autocomplete="off" autocapitalize="off" autocorrect="off"
+           spellcheck="false" placeholder="请输入卡密">
+    <button class="g-btn" id="gBtn" type="button">进入播放</button>
+    <div class="g-err" id="gErr"></div>
+    <div class="g-get" id="gGet" style="display:none">
+      <button class="g-getbtn" id="gGetBtn" type="button">获取卡密</button>
+      <img class="g-qr" id="gQr" alt="扫码获取">
+      <div class="g-tip" id="gTip"></div>
+    </div>
   </div>
 </div>
 
@@ -569,10 +580,13 @@
       if (tk && videoUrl && !/[?&]tk=/.test(videoUrl)) {
         videoUrl += (videoUrl.indexOf('?') >= 0 ? '&' : '?') + 'tk=' + encodeURIComponent(tk);
       }
+      /* MP4：接口给的是本站 /api/media（302 到源站），真实源站地址不再下发 */
+      if (entry.media) {
+        rawDirect = entry.media + (tk ? ((entry.media.indexOf('?') >= 0 ? '&' : '?') + 'tk=' + encodeURIComponent(tk)) : '');
+      }
       if (!title && entry.title) title = entry.title;
       if (Array.isArray(entry.buttons)) buttons = queryButtons.concat(entry.buttons);
       if (entry.type) videoType = entry.type;
-      if (entry.rawUrl && /^https?:\/\//i.test(entry.rawUrl)) rawDirect = entry.rawUrl;
       if (Array.isArray(entry.notice)) noticeLines = entry.notice;
       hideErrOverlay();
       showCover();
@@ -591,9 +605,9 @@
           }
           videoUrl = apiBase + '/api/m3u8/' + encodeURIComponent(videoId);
           if (j.data.type === 'hls' || j.data.type === 'file') videoType = j.data.type;
-          // MP4 大文件：服务器出带宽小，直连源站速度远高于经服务器转发
-          if (j.data.type === 'file' && j.data.rawUrl && /^https?:\/\//i.test(j.data.rawUrl)) {
-            rawDirect = j.data.rawUrl;
+          /* MP4 走本站 /api/media（302 到源站），源地址不下发 */
+          if (j.data.type === 'file' && j.data.media) {
+            rawDirect = apiBase + '/api/media/' + encodeURIComponent(videoId);
           }
           if (!title && j.data.title) title = j.data.title;
           if (Array.isArray(j.data.buttons)) buttons = buttons.concat(j.data.buttons);
@@ -617,6 +631,20 @@
     var gateShown = false;
     function isCodeGate() { return gateCtx.mode === 'code'; }
     function gateWord() { return isCodeGate() ? '卡密' : '访问密码'; }
+
+    /* 手机键盘弹出 → 把门禁层高度对齐到「可视视口」，输入框不会被键盘盖住 */
+    function syncGateVH() {
+      var g = document.getElementById('gate');
+      var vv = window.visualViewport;
+      if (!g || !vv) return;
+      g.style.height = vv.height + 'px';
+      g.style.top = vv.offsetTop + 'px';
+      g.style.bottom = 'auto';
+    }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', syncGateVH);
+      window.visualViewport.addEventListener('scroll', syncGateVH);
+    }
 
     function showGate(d) {
       var g = d.gate || {};
@@ -642,6 +670,7 @@
       document.getElementById('gTip').style.display = 'none';
       document.getElementById('gate').style.display = 'flex';
       hideErrOverlay();
+      syncGateVH();
       try { p.focus(); } catch (e) {}
     }
 
