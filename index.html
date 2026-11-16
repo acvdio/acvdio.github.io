@@ -35,6 +35,50 @@
       padding: 8px 22px; border: none; border-radius: 6px; cursor: pointer;
       background: #1890ff; color: #fff; font-size: 14px;
     }
+    /* ===== 卡密 / 访问密码门 ===== */
+    #gate {
+      position: fixed; inset: 0; z-index: 10002; display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 26px; text-align: center; box-sizing: border-box;
+      background: radial-gradient(circle at 50% 0%, #14263f 0%, #070b12 68%);
+      -webkit-tap-highlight-color: transparent;
+    }
+    #gate .g-lock { line-height: 0; margin-bottom: 10px; }
+    #gate .g-title { font-size: 17px; font-weight: 600; letter-spacing: .5px; color: #eaf1ff; }
+    #gate .g-hint {
+      color: #9fb0d0; font-size: 12.5px; margin: 8px 0 16px;
+      max-width: 330px; line-height: 1.6;
+    }
+    #gate input {
+      width: 100%; max-width: 300px; height: 44px; box-sizing: border-box;
+      border-radius: 10px; border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06); color: #fff; outline: none;
+      font-size: 15px; padding: 0 14px; text-align: center; letter-spacing: 1px;
+    }
+    #gate input:focus { border-color: #2f7bff; background: rgba(47,123,255,.12); }
+    #gate .g-btn {
+      width: 100%; max-width: 300px; height: 44px; margin-top: 12px;
+      border: none; border-radius: 10px; cursor: pointer;
+      background: linear-gradient(135deg, #2f7bff, #1b5fe0); color: #fff;
+      font: 600 15px/1 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 2px;
+    }
+    #gate .g-btn[disabled] { opacity: .6; }
+    #gate .g-err { color: #ff8a8a; font-size: 12.5px; min-height: 18px; margin-top: 10px; }
+    #gate .g-get {
+      width: 100%; max-width: 300px; margin-top: 14px; padding-top: 14px;
+      border-top: 1px dashed rgba(255,255,255,.14);
+    }
+    #gate .g-getbtn {
+      width: 100%; height: 40px; border-radius: 10px; cursor: pointer;
+      background: rgba(7,193,96,.16); border: 1px solid rgba(7,193,96,.5);
+      color: #5be08f; font: 600 13.5px/1 -apple-system, "PingFang SC", sans-serif;
+    }
+    #gate .g-qr {
+      max-width: 200px; width: 60%; margin: 12px auto 0; display: none;
+      border-radius: 10px; background: #fff; padding: 6px;
+    }
+    #gate .g-tip { color: #7f90ad; font-size: 11.5px; margin-top: 10px; line-height: 1.6; }
     /* 静态水印 */
     .wm-static {
       position: fixed; inset: 0; z-index: 9998; pointer-events: none;
@@ -146,6 +190,29 @@
   <button class="retry" onclick="location.reload()">重新加载</button>
 </div>
 <div id="next-tip">▶ 播放下一集</div>
+
+<!-- 卡密 / 访问密码门：在 GitHub 页面上直接验证，跨域调本站 /api/video/:id/unlock -->
+<div id="gate">
+  <div class="g-lock" aria-hidden="true">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#79b4ff" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="10.5" width="16" height="10" rx="2.5"></rect>
+      <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path>
+      <circle cx="12" cy="15.5" r="1.3" fill="#79b4ff" stroke="none"></circle>
+    </svg>
+  </div>
+  <div class="g-title" id="gTitle">受保护的视频</div>
+  <div class="g-hint" id="gHint"></div>
+  <input id="gPass" type="text" autocomplete="off" autocapitalize="off" autocorrect="off"
+         spellcheck="false" placeholder="请输入卡密">
+  <button class="g-btn" id="gBtn" type="button">进入播放</button>
+  <div class="g-err" id="gErr"></div>
+  <div class="g-get" id="gGet" style="display:none">
+    <button class="g-getbtn" id="gGetBtn" type="button">获取卡密</button>
+    <img class="g-qr" id="gQr" alt="扫码获取">
+    <div class="g-tip" id="gTip"></div>
+  </div>
+</div>
 
 <div id="cover">
   <div class="cover-thumb">
@@ -497,6 +564,11 @@
     }
     function playFromEntry(entry) {
       videoUrl = entry.url;
+      /* 门禁视频的 HLS 走本站 /api/m3u8 代理，必须带 tk，否则 403 */
+      var tk = loadTk() || entry.tk || '';
+      if (tk && videoUrl && !/[?&]tk=/.test(videoUrl)) {
+        videoUrl += (videoUrl.indexOf('?') >= 0 ? '&' : '?') + 'tk=' + encodeURIComponent(tk);
+      }
       if (!title && entry.title) title = entry.title;
       if (Array.isArray(entry.buttons)) buttons = queryButtons.concat(entry.buttons);
       if (entry.type) videoType = entry.type;
@@ -533,11 +605,109 @@
           showError('⚠️ 无法连接播放接口，请稍后重试');
         });
     }
-    /* 向后台取某条视频配置（免鉴权公开接口，带 CORS，读库所以即时） */
+    /* 向后台取某条视频配置（免鉴权公开接口 + CORS，读库所以即时）
+     * 门禁视频：不再跳回本站，改为在本页弹卡密/密码门，跨域调本站 unlock 拿 token。
+     * token 存 localStorage（按 sha），之后请求都带 ?tk=。 */
+    var TK_KEY = 'ghtk:' + videoId;
+    function loadTk() { try { return localStorage.getItem(TK_KEY) || ''; } catch (e) { return ''; } }
+    function saveTk(t) {
+      try { if (t) localStorage.setItem(TK_KEY, t); else localStorage.removeItem(TK_KEY); } catch (e) {}
+    }
+    var gateCtx = { mode: 'pwd', hint: '', link: '', img: '', id: '' };
+    var gateShown = false;
+    function isCodeGate() { return gateCtx.mode === 'code'; }
+    function gateWord() { return isCodeGate() ? '卡密' : '访问密码'; }
+
+    function showGate(d) {
+      var g = d.gate || {};
+      gateShown = true;
+      gateCtx.mode = (g.mode === 'code') ? 'code' : 'pwd';
+      gateCtx.hint = g.hint || '';
+      gateCtx.link = g.link || '';
+      gateCtx.img = g.img || '';
+      gateCtx.id = d.id || '';
+      if (!title && d.title) title = d.title;
+      document.getElementById('gTitle').textContent = d.title || title || '受保护的视频';
+      document.getElementById('gHint').textContent = gateCtx.hint ||
+        (isCodeGate() ? '该视频需要卡密，请输入有效卡密' : '该视频已加密，请输入访问密码');
+      var p = document.getElementById('gPass');
+      p.value = '';
+      p.placeholder = '请输入' + gateWord();
+      document.getElementById('gErr').textContent = '';
+      document.getElementById('gBtn').textContent = '进入播放';
+      var btnGet = document.getElementById('gGet');
+      btnGet.style.display = (gateCtx.link || gateCtx.img) ? 'block' : 'none';
+      document.getElementById('gGetBtn').textContent = '获取' + gateWord();
+      document.getElementById('gQr').style.display = 'none';
+      document.getElementById('gTip').style.display = 'none';
+      document.getElementById('gate').style.display = 'flex';
+      hideErrOverlay();
+      try { p.focus(); } catch (e) {}
+    }
+
+    function doUnlock() {
+      var v = (document.getElementById('gPass').value || '').trim();
+      var err = document.getElementById('gErr');
+      var btn = document.getElementById('gBtn');
+      if (!v) { err.textContent = '请输入' + gateWord(); return; }
+      btn.disabled = true;
+      err.textContent = '验证中…';
+      var payload = isCodeGate() ? { code: v } : { password: v };
+      fetch(SYNC_BASE + '/api/video/' + encodeURIComponent(gateCtx.id || videoId) + '/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j && j.code === 1) {
+            saveTk((j.data && j.data.token) || '');
+            err.textContent = '';
+            document.getElementById('gate').style.display = 'none';
+            gateShown = false;
+            loadId();
+          } else {
+            err.textContent = (j && j.msg) || (gateWord() + '不正确');
+            if (j && typeof j.left === 'number') err.textContent += '（还可尝试 ' + j.left + ' 次）';
+          }
+        })
+        .catch(function () { err.textContent = '网络异常，请重试'; })
+        .then(function () { btn.disabled = false; });
+    }
+
+    /* 「获取卡密」：微信内且配了路径 → 直接跳；否则展示扫码图；都没有就给提示 */
+    function openGet() {
+      var qr = document.getElementById('gQr');
+      var tip = document.getElementById('gTip');
+      var wx = /MicroMessenger/i.test(navigator.userAgent || '');
+      if (wx && gateCtx.link) { location.href = gateCtx.link; return; }
+      if (gateCtx.img) {
+        qr.onerror = function () { qr.style.display = 'none'; };
+        qr.src = /^https?:/i.test(gateCtx.img) ? gateCtx.img : (SYNC_BASE + gateCtx.img);
+        qr.style.display = 'block';
+        tip.textContent = wx ? '长按识别上图，按提示领取' + gateWord()
+                             : '请用另一台手机的微信扫描上图，领取' + gateWord();
+        tip.style.display = 'block';
+        return;
+      }
+      tip.textContent = gateCtx.link
+        ? ('请复制本页链接，在微信中打开后点击「获取' + gateWord() + '」')
+        : ('请联系发布者获取' + gateWord());
+      tip.style.display = 'block';
+    }
+
     function fetchServer() {
-      return fetch(SYNC_BASE + '/api/public/map/' + encodeURIComponent(videoId) + '?t=' + Date.now(), { cache: 'no-store' })
+      var tk = loadTk();
+      var url = SYNC_BASE + '/api/video/' + encodeURIComponent(videoId) +
+        '?t=' + Date.now() + (tk ? '&tk=' + encodeURIComponent(tk) : '');
+      return fetch(url, { cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) { return (j && j.code === 1 && j.data && j.data.url) ? j.data : null; })
+        .then(function (j) {
+          if (!j || j.code !== 1 || !j.data) return null;
+          var d = j.data;
+          if (d.locked) { showGate(d); return null; }
+          if (!d.url) return null;
+          return d;
+        })
         .catch(function () { return null; });
     }
     function fetchMap() {
@@ -577,6 +747,8 @@
       idTries++;
       fetchServer().then(function (entry) {
         if (entry) { playFromEntry(entry); startResync(entry, true); return; }
+        /* 已弹出卡密门 → 等用户输入，别再走重试/回落（否则会把门禁层覆盖成「同步中」） */
+        if (gateShown) return;
         // 后台没有这条 / 后台不可用 → 回落 GitHub 静态 map.json
         return fetchMap().then(function (map) {
           var en = map && map[videoId];
@@ -599,6 +771,13 @@
         showError('⚠️ 无法加载视频信息，请稍后重试');
       });
     }
+    /* 卡密门交互绑定 */
+    document.getElementById('gBtn').addEventListener('click', doUnlock);
+    document.getElementById('gPass').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.keyCode === 13) doUnlock();
+    });
+    document.getElementById('gGetBtn').addEventListener('click', openGet);
+
     loadId();
   } else {
     // 静态模式：?url= / ?i= 直接播放
