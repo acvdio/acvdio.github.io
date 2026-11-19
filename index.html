@@ -35,59 +35,61 @@
       padding: 8px 22px; border: none; border-radius: 6px; cursor: pointer;
       background: #1890ff; color: #fff; font-size: 14px;
     }
-    /* ===== 卡密 / 访问密码门 ===== */
+    /* ===== 解锁层（与本站 play.html 同一套视觉：半透明黑遮罩 + 居中深灰圆角卡片） ===== */
     #gate {
       position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 10002; display: none;
       flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch;
-      padding: calc(18px + env(safe-area-inset-top)) 20px calc(18px + env(safe-area-inset-bottom));
-      text-align: center; box-sizing: border-box;
-      background: radial-gradient(circle at 50% 0%, #14263f 0%, #070b12 68%);
+      padding: 20px; text-align: center; box-sizing: border-box;
+      background: rgba(0,0,0,.86); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
       -webkit-tap-highlight-color: transparent;
     }
-    /* 内容用 margin:auto 居中：空间够时居中，键盘弹出/内容超高时可滚动，不会被裁掉 */
-    #gate .g-inner {
-      width: 100%; max-width: 330px; margin: auto;
-      display: flex; flex-direction: column; align-items: center;
+    /* margin:auto 居中：空间够时居中，键盘弹出/内容超高时可滚动，不会被裁掉 */
+    #gate .g-card {
+      width: 100%; max-width: 330px; margin: auto; box-sizing: border-box;
+      padding: 24px 18px 20px; display: flex; flex-direction: column;
+      background: linear-gradient(180deg, #242427, #1a1a1c);
+      border: 1px solid rgba(255,255,255,.07); border-radius: 16px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.6);
     }
-    #gate .g-inner > * { flex: 0 0 auto; }
-    #gate .g-lock { line-height: 0; margin-bottom: 10px; }
-    #gate .g-title { font-size: 17px; font-weight: 600; letter-spacing: .5px; color: #eaf1ff; word-break: break-word; }
-    #gate .g-hint {
-      color: #9fb0d0; font-size: 12.5px; margin: 8px 0 16px;
-      max-width: 330px; line-height: 1.6;
+    #gate .g-card > * { flex: 0 0 auto; }
+    #gate .g-head { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    #gate .g-ico { display: flex; align-items: center; line-height: 0; }
+    #gate .g-title { font-size: 21px; font-weight: 700; letter-spacing: 1.5px; color: #fff; }
+    #gate .g-hint { color: #9a9a9f; font-size: 13.5px; line-height: 1.6; margin-top: 10px; }
+    #gate .g-vtitle {
+      color: #6f6f74; font-size: 11.5px; margin-top: 6px; line-height: 1.5;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     /* 16px 是 iOS 的及格线：小于 16px 聚焦时 Safari/微信会自动放大整页 */
     #gate input {
-      width: 100%; max-width: 300px; height: 46px; box-sizing: border-box;
-      border-radius: 10px; border: 1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06); color: #fff; outline: none;
+      width: 100%; height: 48px; box-sizing: border-box; margin-top: 16px;
+      border-radius: 10px; border: 1px solid rgba(255,255,255,.08);
+      background: #2c2c2f; color: #fff; outline: none;
       font-size: 16px; padding: 0 14px; text-align: center; letter-spacing: 1px;
       -webkit-appearance: none; appearance: none;
     }
-    #gate input:focus { border-color: #2f7bff; background: rgba(47,123,255,.12); }
-    #gate .g-btn {
-      width: 100%; max-width: 300px; height: 44px; margin-top: 12px;
-      border: none; border-radius: 10px; cursor: pointer;
-      background: linear-gradient(135deg, #2f7bff, #1b5fe0); color: #fff;
-      font: 600 15px/1 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-      letter-spacing: 2px;
+    #gate input::placeholder { color: #7b7b80; letter-spacing: .5px; }
+    #gate input:focus {
+      border-color: #f7d40a; background: #323236; box-shadow: 0 0 0 3px rgba(247,212,10,.12);
     }
-    #gate .g-btn[disabled] { opacity: .6; }
-    #gate .g-err { color: #ff8a8a; font-size: 12.5px; min-height: 18px; margin-top: 10px; }
-    #gate .g-get {
-      width: 100%; max-width: 300px; margin-top: 14px; padding-top: 14px;
-      border-top: 1px dashed rgba(255,255,255,.14);
+    #gate .g-btn { display: none; }   /* 兜底提交按钮：默认隐藏，只留 Enter / 自动解锁 */
+    #gate .g-err { color: #ff6b6b; font-size: 12.5px; min-height: 14px; margin-top: 6px; }
+    #gate .g-get { width: 100%; margin-top: 2px; }
+    #gate .g-yellow, #gate .g-blue {
+      display: block; width: 100%; box-sizing: border-box; height: 46px; cursor: pointer;
+      border: none; border-radius: 8px; padding: 0; letter-spacing: .5px;
+      font: 700 15px/46px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
-    #gate .g-getbtn {
-      width: 100%; height: 40px; border-radius: 10px; cursor: pointer;
-      background: rgba(7,193,96,.16); border: 1px solid rgba(7,193,96,.5);
-      color: #5be08f; font: 600 13.5px/1 -apple-system, "PingFang SC", sans-serif;
-    }
+    #gate .g-yellow { margin-top: 10px; background: #f7d40a; color: #1a1a1a; }
+    #gate .g-yellow:active { background: #e3c009; }
+    #gate .g-blue { margin-top: 10px; background: #29b6f6; color: #fff; }
+    #gate .g-blue:active { background: #1fa5e2; }
     #gate .g-qr {
-      max-width: 200px; width: 60%; margin: 12px auto 0; display: none;
+      max-width: 200px; width: 60%; margin: 14px auto 0; display: none;
       border-radius: 10px; background: #fff; padding: 6px;
     }
-    #gate .g-tip { color: #7f90ad; font-size: 11.5px; margin-top: 10px; line-height: 1.6; }
+    #gate .g-tip { color: #8a8a90; font-size: 11.5px; margin-top: 10px; line-height: 1.7; }
     /* 静态水印 */
     .wm-static {
       position: fixed; inset: 0; z-index: 9998; pointer-events: none;
@@ -202,23 +204,27 @@
 
 <!-- 卡密 / 访问密码门：在 GitHub 页面上直接验证，跨域调本站 /api/video/:id/unlock -->
 <div id="gate">
-  <div class="g-inner">
-    <div class="g-lock" aria-hidden="true">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#79b4ff" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round">
-        <rect x="4" y="10.5" width="16" height="10" rx="2.5"></rect>
-        <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path>
-        <circle cx="12" cy="15.5" r="1.3" fill="#79b4ff" stroke="none"></circle>
-      </svg>
+  <div class="g-card">
+    <div class="g-head">
+      <span class="g-ico" aria-hidden="true">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#f7d40a" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3.6" y="10.2" width="16.8" height="10.4" rx="2.6"></rect>
+          <path d="M7.6 10.2V6.9a4.2 4.2 0 0 1 8-1.5"></path>
+          <circle cx="12" cy="15.4" r="1.35" fill="#f7d40a" stroke="none"></circle>
+        </svg>
+      </span>
+      <span class="g-title">解锁观看</span>
     </div>
-    <div class="g-title" id="gTitle">受保护的视频</div>
     <div class="g-hint" id="gHint"></div>
+    <div class="g-vtitle" id="gVTitle" style="display:none"></div>
     <input id="gPass" type="text" autocomplete="off" autocapitalize="off" autocorrect="off"
-           spellcheck="false" placeholder="请输入卡密">
-    <button class="g-btn" id="gBtn" type="button">进入播放</button>
+           spellcheck="false" placeholder="输入卡密自动解锁">
     <div class="g-err" id="gErr"></div>
+    <button class="g-btn" id="gBtn" type="button">确认</button>
     <div class="g-get" id="gGet" style="display:none">
-      <button class="g-getbtn" id="gGetBtn" type="button">获取卡密</button>
+      <button class="g-yellow" id="gGetBtn" type="button">点击获取卡密</button>
+      <button class="g-blue" id="gTut" type="button">查看获取卡密教程</button>
       <img class="g-qr" id="gQr" alt="扫码获取">
       <div class="g-tip" id="gTip"></div>
     </div>
@@ -646,6 +652,11 @@
       window.visualViewport.addEventListener('scroll', syncGateVH);
     }
 
+    /* 最近一次验证失败的值：用户没改动就不再自动重试，避免一次输错反复撞「失败 8 次锁 10 分钟」 */
+    var gateLastFail = '';
+    var gateBusy = false;
+    var gateAutoT = null;
+
     function showGate(d) {
       var g = d.gate || {};
       gateShown = true;
@@ -655,17 +666,23 @@
       gateCtx.img = g.img || '';
       gateCtx.id = d.id || '';
       if (!title && d.title) title = d.title;
-      document.getElementById('gTitle').textContent = d.title || title || '受保护的视频';
+      gateLastFail = '';
+      var w = gateWord();
       document.getElementById('gHint').textContent = gateCtx.hint ||
-        (isCodeGate() ? '该视频需要卡密，请输入有效卡密' : '该视频已加密，请输入访问密码');
+        (isCodeGate() ? '请输入卡密观看完整视频' : '请输入密码观看完整视频');
+      /* 视频标题放底部小灰字，主体固定「解锁观看」 */
+      var vt = document.getElementById('gVTitle');
+      var t = d.title || title || '';
+      if (t) { vt.textContent = t; vt.style.display = 'block'; } else { vt.style.display = 'none'; }
       var p = document.getElementById('gPass');
       p.value = '';
-      p.placeholder = '请输入' + gateWord();
+      p.placeholder = '输入' + w + '自动解锁';
       document.getElementById('gErr').textContent = '';
-      document.getElementById('gBtn').textContent = '进入播放';
+      document.getElementById('gBtn').textContent = '确认';
       var btnGet = document.getElementById('gGet');
       btnGet.style.display = (gateCtx.link || gateCtx.img) ? 'block' : 'none';
-      document.getElementById('gGetBtn').textContent = '获取' + gateWord();
+      document.getElementById('gGetBtn').textContent = '点击获取' + w;
+      document.getElementById('gTut').textContent = '查看获取' + w + '教程';
       document.getElementById('gQr').style.display = 'none';
       document.getElementById('gTip').style.display = 'none';
       document.getElementById('gate').style.display = 'flex';
@@ -675,10 +692,14 @@
     }
 
     function doUnlock() {
-      var v = (document.getElementById('gPass').value || '').trim();
+      var p = document.getElementById('gPass');
+      var v = (p.value || '').trim();
       var err = document.getElementById('gErr');
       var btn = document.getElementById('gBtn');
+      if (gateBusy) return;
       if (!v) { err.textContent = '请输入' + gateWord(); return; }
+      if (gateAutoT) { clearTimeout(gateAutoT); gateAutoT = null; }
+      gateBusy = true;
       btn.disabled = true;
       err.textContent = '验证中…';
       var payload = isCodeGate() ? { code: v } : { password: v };
@@ -691,36 +712,58 @@
           if (j && j.code === 1) {
             saveTk((j.data && j.data.token) || '');
             err.textContent = '';
+            gateLastFail = '';
+            try { p.blur(); } catch (e) {}
             document.getElementById('gate').style.display = 'none';
             gateShown = false;
             loadId();
           } else {
+            gateLastFail = v;
             err.textContent = (j && j.msg) || (gateWord() + '不正确');
             if (j && typeof j.left === 'number') err.textContent += '（还可尝试 ' + j.left + ' 次）';
           }
         })
         .catch(function () { err.textContent = '网络异常，请重试'; })
-        .then(function () { btn.disabled = false; });
+        .then(function () { gateBusy = false; btn.disabled = false; });
     }
 
-    /* 「获取卡密」：微信内且配了路径 → 直接跳；否则展示扫码图；都没有就给提示 */
-    function openGet() {
+    /* 黄色「点击获取」：微信内且配了路径 → 直接跳；否则展示扫码图；都没有就给提示
+       蓝色「查看教程」：同上面板，但不自动跳走，多给一段编号步骤 */
+    function openGet(tut) {
       var qr = document.getElementById('gQr');
       var tip = document.getElementById('gTip');
       var wx = /MicroMessenger/i.test(navigator.userAgent || '');
-      if (wx && gateCtx.link) { location.href = gateCtx.link; return; }
+      var w = gateWord();
+      if (wx && gateCtx.link && !tut) { location.href = gateCtx.link; return; }
       if (gateCtx.img) {
         qr.onerror = function () { qr.style.display = 'none'; };
         qr.src = /^https?:/i.test(gateCtx.img) ? gateCtx.img : (SYNC_BASE + gateCtx.img);
         qr.style.display = 'block';
-        tip.textContent = wx ? '长按识别上图，按提示领取' + gateWord()
-                             : '请用另一台手机的微信扫描上图，领取' + gateWord();
+        tip.textContent = tut
+          ? ('① 长按识别二维码 → ② 按提示领取' + w + ' → ③ 回到本页粘贴输入即可自动解锁')
+          : (wx ? ('长按识别上图，按提示领取' + w) : ('请用另一台手机的微信扫描上图，领取' + w));
         tip.style.display = 'block';
+        /* 教程模式：已有二维码也把「打开小程序」按钮露出来，微信内可直接点 */
+        if (tut && gateCtx.link) {
+          var mp = document.getElementById('ggMpInline');
+          if (!mp) {
+            mp = document.createElement('a');
+            mp.id = 'ggMpInline';
+            mp.className = 'g-yellow';
+            mp.style.textDecoration = 'none';
+            mp.textContent = '打开小程序领取' + w;
+            mp.href = gateCtx.link;
+            qr.parentNode.insertBefore(mp, qr);
+          }
+          mp.style.display = 'block';
+        }
         return;
       }
       tip.textContent = gateCtx.link
-        ? ('请复制本页链接，在微信中打开后点击「获取' + gateWord() + '」')
-        : ('请联系发布者获取' + gateWord());
+        ? (tut
+            ? ('① 复制本页链接 → ② 在微信中打开 → ③ 点「点击获取' + w + '」领取 → ④ 回到本页输入')
+            : ('请复制本页链接，在微信中打开后点击「点击获取' + w + '」'))
+        : ('请联系发布者获取' + w);
       tip.style.display = 'block';
     }
 
@@ -805,7 +848,20 @@
     document.getElementById('gPass').addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.keyCode === 13) doUnlock();
     });
-    document.getElementById('gGetBtn').addEventListener('click', openGet);
+    document.getElementById('gGetBtn').addEventListener('click', function () { openGet(false); });
+    document.getElementById('gTut').addEventListener('click', function () { openGet(true); });
+    /* 输入即自动解锁：停顿 550ms 且长度 ≥4 才提交；与上次失败值相同则不再重试 */
+    document.getElementById('gPass').addEventListener('input', function () {
+      var v = (this.value || '').trim();
+      var err = document.getElementById('gErr');
+      if (gateAutoT) { clearTimeout(gateAutoT); gateAutoT = null; }
+      if (err.textContent) err.textContent = '';
+      if (v.length < 4 || v === gateLastFail) return;
+      gateAutoT = setTimeout(function () {
+        gateAutoT = null;
+        if (!gateBusy) doUnlock();
+      }, 550);
+    });
 
     loadId();
   } else {
