@@ -741,8 +741,8 @@
         qr.style.display = 'block';
         tip.textContent = tut
           ? ('① 长按识别二维码 → ② 按提示领取' + w + ' → ③ 回到本页粘贴输入即可自动解锁')
-          : (wx ? ('长按识别上图，按提示领取' + w) : ('请用另一台手机的微信扫描上图，领取' + w));
-        tip.style.display = 'block';
+          : (wx ? ('长按识别上图，按提示领取' + w) : '');
+        tip.style.display = tip.textContent ? 'block' : 'none';
         /* 教程模式：已有二维码也把「打开小程序」按钮露出来，微信内可直接点 */
         if (tut && gateCtx.link) {
           var mp = document.getElementById('ggMpInline');
